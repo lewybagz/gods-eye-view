@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- Keep rendering when the window is larger than the GPU's texture limit.
+  Cesium sizes its framebuffers to the canvas and never clamps them, so a
+  device reporting a 2048 px `MAX_TEXTURE_SIZE` stopped rendering in a
+  2560×1440 fullscreen window. The viewer now lowers its resolution scale just
+  enough for the canvas to fit, logs the scale it chose once, and restores the
+  requested scale when the window shrinks (fixes #905).
+
 ## [0.2.1] — 2026-10-02 — God's Eye View through Your Agent (with security fixes and other features)
 
 - Ship each bundled data pack once. The region, marine, admin-boundary,

@@ -844,6 +844,30 @@ future driver fix restores the effect with no code change; iOS/iPadOS platform
 detection is the backstop for when no probe context can be created. Applied
 during viewer construction, before any tile builds a draw command.
 
+## Drawing buffer within GPU limits
+
+Cesium sizes its full-screen framebuffers (globe depth among them) to the
+drawing buffer and never clamps them, so a canvas wider or taller than the
+device's `MAX_TEXTURE_SIZE` stops the render loop with "Width must be less than
+or equal to the maximum texture size". With Cesium's default
+`useBrowserRecommendedResolution`, the drawing buffer is the canvas's CSS size
+times `resolutionScale`; devicePixelRatio does not enter it. A 2560×1440
+fullscreen window therefore fails on a GPU reporting 2048 while 1920×1080 does
+not.
+
+The viewer wraps the widget's `resize`, which the render loop and
+`Viewer.resize` both call before sizing the canvas. Each pass lowers
+`resolutionScale` just enough for the longest edge to fit the smaller of the
+texture and renderbuffer limits, so a limited device renders softer instead of
+halting and every other device is unchanged. A scale set elsewhere is treated
+as the requested scale: the cap only lowers it, and lifts again when the window
+shrinks. The first capped pass logs one `[Viewer]` warning naming the limit and
+the resulting resolution. Applied during viewer construction, which re-sizes
+the canvas once with the cap so the first frame already fits.
+`scripts/qa-drawing-buffer-limit.mjs` reports a 2048 px limit to a real browser
+and checks the cap at 2560×1440, its release at 1920×1080, the cap again at
+3840×2160, and an unlimited control page.
+
 ## Map Source control ownership
 
 Map Source controls own chip listeners, source-state subscriptions and selection

@@ -1,5 +1,6 @@
 import * as Cesium from 'cesium';
 import { applyModelAtmosphereWorkaround } from './atmosphereCompat.js';
+import { installDrawingBufferLimit } from './drawingBufferLimit.js';
 
 const PINCH_ZOOM_MULTIPLIER = 8;
 const MAX_PINCH_PIXEL_DELTA = 120;
@@ -129,6 +130,10 @@ export function createApplicationViewer({ container, creditContainer }) {
     // atmosphere fails to LINK on Apple's Metal backend and kills the
     // render loop. See app/atmosphereCompat.js.
     applyModelAtmosphereWorkaround(viewer.scene);
+    // Before the first frame allocates framebuffers: a canvas larger than the
+    // GPU's texture limit stops Cesium's render loop. See
+    // app/drawingBufferLimit.js.
+    installDrawingBufferLimit(viewer, { limits: Cesium.ContextLimits });
     viewer.scene.globe.show = false;
     viewer.scene.skyAtmosphere.show = true;
     viewer.scene.skyAtmosphere.atmosphereLightIntensity = 18;
